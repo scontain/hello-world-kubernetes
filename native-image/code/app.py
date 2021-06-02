@@ -21,7 +21,7 @@ def main(v):
         write_int(v,1000)
 
     num = read_int(v)
-    print(f"Number of executions are {num}" )
+    print(f"The number of executions is {num}" )
     write_int(v, num+1)
     
 if __name__ == '__main__':
