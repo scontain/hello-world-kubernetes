@@ -95,7 +95,7 @@ done
 export GH_TOKEN=${GH_TOKEN:?"GH_TOKEN is not set! Please set to a valid github token."}
 export SCONE_HUB_ACCESS_TOKEN=${SCONE_HUB_ACCESS_TOKEN:?"SCONE_HUB_ACCESS_TOKEN is not set! Please set to a valid registry.scontain.com token."}
 export SCONE_HUB_USERNAME=${SCONE_HUB_USERNAME:?"SCONE_HUB_USERNAME is not set! Please set to a valid username for registry.scontain.com"}
-export SCONE_HUB_EMAIL=v${SCONE_HUB_EMAIL:?"SCONE_HUB_EMAIL is not set! Please set to a valid username for registry.scontain.com"}
+export SCONE_HUB_EMAIL=${SCONE_HUB_EMAIL:?"SCONE_HUB_EMAIL is not set! Please set to a valid username for registry.scontain.com"}
 
 [[ $SWITCH_CLEAN == "yes" ]] && echo "Cleaning .." && clean
 [[ $SWITCH_AKS == "no" ]] && [[ $SWITCH_MINIKUBE == "no" ]] && echo "Please specify either -m (for minikube demo) or -a (for AKS demo) but not both!" && exit 1
