@@ -15,10 +15,10 @@ def read_int(file):
 @click.option('-v',  default='/V1/num', help='file number of executions.')
 def main(v):
     if not os.path.exists(v):
-        print("{} does not exist, creating ... ".format(v))
+        print(f"{v} does not exist, creating ... ")
         os.mknod(v)
-        print("And writing 1000 to it ... ")
-        write_int(v,1000)
+        print("And writing 0 to it ... ")
+        write_int(v,1)
 
     num = read_int(v)
     print(f"The number of executions is {num}" )

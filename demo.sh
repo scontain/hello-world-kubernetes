@@ -22,9 +22,26 @@ export REGISTRY=""
 export DOCKER_CONFIG=""
 export SGX_DEVICE="scone"
 export SET_PULL_SECRET=""
-export PULL_SECRET_NAME="sconeapps"
+export PULL_SECRET_NAME="sconeapps" # secret for sconeapps
+export PULL_SECRET_NAME2="regcred"  # secret for built image
 export PULL_POLICY="IfNotPresent"
 export PUSH=""
+
+
+function issue_error_exit_message {
+    errcode=$?
+    trap no_error_message EXIT
+    if [[ $errcode != 0 ]] ; then
+        echo "ERROR: demo failed at lines:"
+        printf '%s,'  "${BASH_LINENO[@]}"
+    else
+        echo "OK"
+    fi
+    exit $errcode
+}
+
+trap issue_error_exit_message EXIT
+
 
 function clean {
     helm delete python-service-0 || true
@@ -55,12 +72,13 @@ function usage() {
         -v\tEnable verbose mode (print Dockerfile and session of sconified image)
         -m\tRun with minikube
         -a\tRun on AKS
-        -r\tRegistry to push image (only for AKS)
+        -n\tRun on single node Kubernetes cluster
+        -r\tRegistry to push image (on AKS and single node Kubernetes)
         -c\tClean
         "
 }
 
-while getopts ":hxvamcr:" opt; do
+while getopts ":hxvamncr:" opt; do
     case ${opt} in
         \?)
             usage
@@ -83,6 +101,9 @@ while getopts ":hxvamcr:" opt; do
         m)
             export SWITCH_MINIKUBE="yes"
             ;;
+        n)
+            export SWITCH_K8s="yes"
+            ;;
         c)
             export SWITCH_CLEAN="yes"
             ;;
@@ -98,22 +119,24 @@ export SCONE_HUB_USERNAME=${SCONE_HUB_USERNAME:?"SCONE_HUB_USERNAME is not set! 
 export SCONE_HUB_EMAIL=${SCONE_HUB_EMAIL:?"SCONE_HUB_EMAIL is not set! Please set to a valid username for registry.scontain.com"}
 
 [[ $SWITCH_CLEAN == "yes" ]] && echo "Cleaning .." && clean
-[[ $SWITCH_AKS == "no" ]] && [[ $SWITCH_MINIKUBE == "no" ]] && echo "Please specify either -m (for minikube demo) or -a (for AKS demo) but not both!" && exit 1
+[[ $SWITCH_AKS == "no" ]] && [[ $SWITCH_MINIKUBE == "no" ]]  && [[ $SWITCH_K8s == "no" ]] && echo "Please specify either -m (for minikube demo) or -a (for AKS demo) or -n (for Kubernetes)!" && exit 1
 
 [[ $SWITCH_VERBOSE == "yes" ]] && export VERBOSE="--verbose"
 [[ $SWITCH_DEBUG == "yes" ]] && export DEBUG="--debug"
 
-if [[ $SWITCH_AKS == "yes" ]]
+if [[ $SWITCH_AKS == "yes" || $SWITCH_K8s == "yes" ]]
 then
-    [[ $SWITCH_MINIKUBE == "yes" ]] && echo "Please speciyf either -m or -a, not both!" && exit 1
-    [[ -z $REGISTRY ]] && echo "Please speciyf registry name to push images to (-r option)!" && exit 1  
+    [[ $SWITCH_MINIKUBE == "yes" ]] && echo "Please specify either -m or -a or -n" && exit 1
+    [[ $SWITCH_AKS == "yes" && $SWITCH_K8s == "yes" ]] && echo "Please specify either -n or -a, not both!" && exit 1
+    [[ -z $REGISTRY ]] && echo "Please specify registry name to push images to (-r option)!" && exit 1  
     export DOCKER_CONFIG="-v $HOME/.docker/config.json:/root/.docker/config.json"
     export PYTHON_SCONIFIED_IMAGE=$REGISTRY":"$PYTHON_SCONIFIED_IMAGE
-    export SGX_DEVICE="azure"
-    export SET_PULL_SECRET="--set imagePullSecrets[0].name=$PULL_SECRET_NAME"
+    [[ $SWITCH_AKS = "yes" ]] && export SGX_DEVICE="azure"
+    export SET_PULL_SECRET="--set imagePullSecrets[0].name=$PULL_SECRET_NAME2"
     export PULL_POLICY="Always"
     export PUSH="--push-image"
 fi
+
 
 function check_host {
     [[ -z $(which docker) ]] && echo "Please install docker!" && exit 1
@@ -236,16 +259,26 @@ function aks_recreate_pvc() {
     kubectl apply -f pvc/pvc_azure.yaml
 }
 
+
+function k8s_recreate_pvc() {
+    echo "For some reasons deleting test-pvc sometimes blocks because it gets stuck in delete state"
+    echo "Kill and execute: kubectl patch pvc test-pvc -p '{\"metadata\":{\"finalizers\":null}}'"
+    kubectl delete pvc test-pvc || echo "PVC does not exist.."
+    kubectl delete pv test-pvc || echo "PV does not exist.."
+    kubectl create -f pv/pv_node.yaml || echo "PV already exists?"
+    kubectl create -f pvc/pvc_node.yaml || echo "PVC already exists?"
+}
 prepare_host
 
 build_native_image
 
 sconification
 
-minikube_image_load "$PYTHON_SCONIFIED_IMAGE"
+echo "..."
 
-[[ $SWITCH_MINIKUBE = "yes" ]] && minikube_recreate_pvc
+[[ $SWITCH_MINIKUBE = "yes" ]] &&  minikube_image_load "$PYTHON_SCONIFIED_IMAGE" && minikube_recreate_pvc
 [[ $SWITCH_AKS = "yes" ]] && aks_recreate_pvc
+[[ $SWITCH_K8s = "yes" ]] && k8s_recreate_pvc
 
 sleep 10
 deploy_to_kubernets

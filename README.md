@@ -6,7 +6,7 @@
 - kubectl
 - Access to https://github.com/scontain/sconeapps/
 - Access to https://gitlab.scontain.com/
-
+- Push access to some container register
 # Demo
 
 This a demonstration of one step transformation of Python native image (`./native-image/Dockerfile`) to SCONE-enabled image and subsequent execution on K8s cluster (imitated with minikube).
@@ -26,6 +26,15 @@ export SCONE_HUB_EMAIL=<your email>
 ./demo.sh -m
 ```
 
+For Azure and Kubernetes deployments, you need to set the image pull secret for the generated
+image:
+
+```
+kubectl create secret docker-registry regcred --docker-server=<your registry> --docker-username=<your registry user name> --docker-password=<your registry access token> --docker-email=<your registry user email>
+``
+
+Note that you also must have push rights to the registry on the machine on which you execute `./demo.sh`. 
+
 To run demo with AKS:
 ```bash
 export GH_TOKEN=<your token>
@@ -35,5 +44,11 @@ export SCONE_HUB_EMAIL=<your email>
 ./demo.sh -a -r <your registry>
 ```
 
-
-
+To run demo on Kubernetes:
+```bash
+export GH_TOKEN=<your token>
+export SCONE_HUB_ACCESS_TOKEN=<your token>
+export SCONE_HUB_USERNAME=<your username>
+export SCONE_HUB_EMAIL=<your email>
+./demo.sh -n -r <your registry>
+```
