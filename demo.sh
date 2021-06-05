@@ -44,12 +44,12 @@ trap issue_error_exit_message EXIT
 
 
 function clean {
-    helm delete python-service-0 || true
-    helm delete python-service-1 || true
-    helm delete python-service-2 || true
-    helm delete python-service-3 || true
-    helm delete my-las || true
-    helm delete my-sgxdev || true
+    helm uninstall python-service-0 || true
+    helm uninstall python-service-1 || true
+    helm uninstall python-service-2 || true
+    helm uninstall python-service-3 || true
+    helm uninstall my-las || true
+    helm uninstall my-sgxdev || true
     rm -f host_is_ready
     rm -f pvc_minikube.yaml
 
@@ -237,8 +237,8 @@ function deploy_to_kubernets {
 
     kubectl wait --for=condition=complete --timeout=45s job/python-service-$i-sconify-python-service
     kubectl logs job/python-service-$i-sconify-python-service
+    helm uninstall python-service-$i > /dev/null 2>&1 || true
     done
-    helm delete python-service-3 > /dev/null 2>&1 || true
     echo ""
     echo "Run this command to increase counter one more time:"
     echo "helm install python-service-3 charts/python-service \
@@ -261,10 +261,9 @@ function aks_recreate_pvc() {
 
 
 function k8s_recreate_pvc() {
-    echo "For some reasons deleting test-pvc sometimes blocks because it gets stuck in delete state"
-    echo "Kill and execute: kubectl patch pvc test-pvc -p '{\"metadata\":{\"finalizers\":null}}'"
-    kubectl delete pvc test-pvc || echo "PVC does not exist.."
-    kubectl delete pv test-pvc || echo "PV does not exist.."
+    echo "If the following deletes block, it means that the volume (claim) is still used."
+    kubectl delete pvc test-pvc || true
+    kubectl delete pv test-pvc   || true
     kubectl create -f pv/pv_node.yaml || echo "PV already exists?"
     kubectl create -f pvc/pvc_node.yaml || echo "PVC already exists?"
 }
