@@ -26,29 +26,37 @@ export SCONE_HUB_EMAIL=<your email>
 ./demo.sh -m
 ```
 
-For Azure and Kubernetes deployments, you need to set the image pull secret for the generated
-image:
+For Azure and Kubernetes deployments, you need define a container registry and to set the image pull secret for the generated image:
 
+```bash
+export MY_DOCKER_REPOSITORY=...
+export K8S_IMAGE_PULL_SECRET=regcred
 ```
-kubectl create secret docker-registry regcred --docker-server=<your registry> --docker-username=<your registry user name> --docker-password=<your registry access token> --docker-email=<your registry user email>
+
+and you need to define this secret on your Kubernetes cluster:
+
+```bash
+kubectl create secret docker-registry "$K8S_IMAGE_PULL_SECRET" --docker-server="$MY_DOCKER_REPOSITORY" --docker-username=<your registry user name> --docker-password=<your registry access token> --docker-email=<your registry user email>
 ``
 
 Note that you also must have push rights to the registry on the machine on which you execute `./demo.sh`. 
 
 To run demo with AKS:
+
 ```bash
 export GH_TOKEN=<your token>
 export SCONE_HUB_ACCESS_TOKEN=<your token>
 export SCONE_HUB_USERNAME=<your username>
 export SCONE_HUB_EMAIL=<your email>
-./demo.sh -a -r <your registry>
+./demo.sh -a -r "$MY_DOCKER_REPOSITORY"
 ```
 
 To run demo on Kubernetes:
+
 ```bash
 export GH_TOKEN=<your token>
 export SCONE_HUB_ACCESS_TOKEN=<your token>
 export SCONE_HUB_USERNAME=<your username>
 export SCONE_HUB_EMAIL=<your email>
-./demo.sh -n -r <your registry>
+./demo.sh -n -r "$MY_DOCKER_REPOSITORY"
 ```

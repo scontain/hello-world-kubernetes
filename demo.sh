@@ -23,7 +23,7 @@ export DOCKER_CONFIG=""
 export SGX_DEVICE="scone"
 export SET_PULL_SECRET=""
 export PULL_SECRET_NAME="sconeapps" # secret for sconeapps
-export PULL_SECRET_NAME2="regcred"  # secret for built image
+export PULL_SECRET_NAME2=${K8S_IMAGE_PULL_SECRET:-"regcred"}  # secret for built image
 export PULL_POLICY="IfNotPresent"
 export PUSH=""
 
@@ -235,7 +235,7 @@ function deploy_to_kubernets {
     --set scone.log=ERROR \
     --set scone.printVersion=true
 
-    kubectl wait --for=condition=complete --timeout=45s job/python-service-$i-sconify-python-service
+    kubectl wait --for=condition=complete --timeout=60s job/python-service-$i-sconify-python-service
     kubectl logs job/python-service-$i-sconify-python-service
     helm uninstall python-service-$i > /dev/null 2>&1 || true
     done
