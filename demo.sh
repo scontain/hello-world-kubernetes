@@ -48,8 +48,8 @@ function clean {
     helm uninstall python-service-1 || true
     helm uninstall python-service-2 || true
     helm uninstall python-service-3 || true
-    helm uninstall my-las || true
-    helm uninstall my-sgxdev || true
+    helm uninstall las || true
+    helm uninstall sgxdev || true
     rm -f host_is_ready
     rm -f pvc_minikube.yaml
 
@@ -170,8 +170,8 @@ function prepare_host {
     fi
 
     helm repo update
-    helm install my-sgxdevplugin sconeapps/sgxdevplugin
-    helm install my-las sconeapps/las
+    helm status  sgxdevplugin || helm install sgxdevplugin sconeapps/sgxdevplugin
+    helm status  las || helm install las sconeapps/las
 
     docker pull ${SCONIFY_IMAGE} || (echo "You need access to registry.scontain.com:5050" && exit 1)
 
