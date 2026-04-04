@@ -16,6 +16,7 @@ def read_int(file):
 def main(v):
     if not os.path.exists(v):
         print(f"{v} does not exist, creating ... ")
+        os.makedirs(os.path.dirname(v), exist_ok=True)
         os.mknod(v)
         print("And writing 0 to it ... ")
         write_int(v,1)
