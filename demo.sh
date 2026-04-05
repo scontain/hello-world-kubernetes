@@ -208,7 +208,7 @@ docker run -it --rm \
         --las="$LAS_ADDR" \
         --heap="256m" \
         --stack="4m" \
-        --binary="/usr/bin/python3.7" \
+        --binary="/usr/bin/python3.12" \
         --dlopen="1" \
         --volume="V1:/V1" \
         --dir=/code \
